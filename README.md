@@ -1,12 +1,19 @@
 # griasdi-nix
 
 A Nix flake for [griasdi](https://griasdi.github.io/), end-to-end encrypted chat
-and voice. griasdi is proprietary, so this repackages the official Linux tarball
-(x86_64 and aarch64) without building from source. As per the license, the
-binary is not patched: it runs unmodified in an FHS environment (`buildFHSEnv`),
-similar to the way nixpkgs runs Discord.
+and voice, on x86_64 and aarch64 Linux.
 
-## Use on NixOS
+griasdi is proprietary, so this repackages the official Linux tarball
+instead of building from source and runs it unmodified in an FHS environment
+(`buildFHSEnv`).
+
+## Try it
+
+```sh
+nix run github:GustavoGarone/griasdi-nix
+```
+
+## Install on NixOS
 
 ```nix
 {
@@ -23,22 +30,11 @@ similar to the way nixpkgs runs Discord.
 }
 ```
 
-You don't need `allowUnfree`: the flake allows only griasdi. If you use
-`overlays.default` instead, your nixpkgs has to allow it.
+You don't need `allowUnfree`, because the flake allows griasdi and nothing else.
+If you use `overlays.default` instead, your own nixpkgs has to allow it.
 
-Try it without installing: `nix run .#griasdi`.
-
-Screen sharing on Wayland goes through xdg-desktop-portal, so enable
-`xdg.portal` with a backend that supports screen capture (gnome, kde, wlr,
-hyprland, ...).
-
-Screen sharing fails on niri with `no more input formats`. griasdi only accepts
-shared-memory frames, and niri only sends DMA-BUF, so the PipeWire format
-negotiation fails. This might also happen on other compositors that only send
-DMA-BUF, though I've not tested that. This is in griasdi, not in the packaging.
-
-The app doesn't update itself here: it sees the read-only store and leaves
-updates to the package.
+**The app doesn't update itself.** It sees that it's in the read-only store
+  and leaves updates to the package.
 
 ## Updating
 
@@ -47,14 +43,15 @@ updates to the package.
 ./update.sh dev    # a specific channel
 ```
 
-The script writes the build, URL and sha256 from the server's manifest into
-`sources.json`.
+The script reads the update server's manifest and writes the build number, URL
+and sha256 into `sources.json`.
 
-On GitHub, `.github/workflows/update.yml` does this every hour: it runs
-`update.sh`, builds the new pin, and commits `sources.json` if it changed. It
-can also be started by hand from the Actions tab.
+`.github/workflows/update.yml` does this every hour: it runs `update.sh`, builds
+the new pin, and commits `sources.json` if anything changed. You can also start
+it by hand from the Actions tab.
 
-**Caveat:** the update server keeps only the newest build and the one before
-it, and new builds come out often. A pinned build stops downloading soon after
-it's replaced. Machines that already have it in the store keep working, but a
-fresh install fails with a 404 until you run `./update.sh`.
+**Note:** as of writing, the update server only keeps the newest build and
+the one before it, and new builds come out often, so a pinned build stops
+downloading soon after it's replaced. Machines that already have it in the
+store keep working, but a fresh install fails with a 404 until `sources.json`
+is updated.
