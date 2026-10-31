@@ -1,0 +1,65 @@
+name: Update griasdi
+
+# The update server keeps only the newest build and the one before it, and
+# new builds come out several times a day, so check often.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Pin the newest build
+        run: nix shell nixpkgs#curl nixpkgs#jq -c bash ./update.sh
+
+      - name: Check for a new build
+        id: diff
+        run: |
+          if git diff --quiet -- sources.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The runner only builds x86_64, so check the other tarballs' hashes
+      # by downloading them.
+      - name: Check every tarball
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          jq -r 'to_entries[] | select(.value | type == "object") | "\(.value.sha256)  \(.value.url)"' sources.json |
+            while read -r sha url; do
+              got=$(curl -sfL --max-time 600 "$url" | sha256sum | cut -d' ' -f1)
+              if [ "$got" != "$sha" ]; then
+                echo "::error::sha256 mismatch for $url: got $got"
+                exit 1
+              fi
+              echo "ok $url"
+            done
+
+      # Downloads the tarball (checks the sha256) and builds the FHS env.
+      - name: Build
+        if: steps.diff.outputs.changed == 'true'
+        run: nix build .#griasdi --print-build-logs
+
+      - name: Commit
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          summary=$(jq -r '"\(.version) build \(.build) (\(.channel))"' sources.json)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "griasdi: $summary" -- sources.json
+          git pull --rebase
+          git push
