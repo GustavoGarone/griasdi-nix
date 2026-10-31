@@ -47,8 +47,7 @@ The script reads the update server's manifest and writes the build number, URL
 and sha256 into `sources.json`.
 
 `.github/workflows/update.yml` does this every hour: it runs `update.sh`, builds
-the new pin, and commits `sources.json` if anything changed. You can also start
-it by hand from the Actions tab.
+the new pin, and commits `sources.json` if anything changed.
 
 **Note:** as of writing, the update server only keeps the newest build and
 the one before it, and new builds come out often, so a pinned build stops
