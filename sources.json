@@ -1,13 +1,13 @@
 {
   "channel": "dev",
-  "build": 566,
+  "build": 568,
   "version": "0.1.0",
   "x86_64-linux": {
-    "url": "https://griasdi.doodleshnookie.net/updates/dev/566/griasdi-0.1.0-x86_64-linux.tar.gz",
-    "sha256": "86025556011d9f7902519c163233e9e08fb0c400d053e678614055ca6b85732a"
+    "url": "https://griasdi.doodleshnookie.net/updates/dev/568/griasdi-0.1.0-x86_64-linux.tar.gz",
+    "sha256": "02befcd8bcdb8a31e0d7bc242557818f4c8fa8c9b6683e242161e31097bd26a0"
   },
   "aarch64-linux": {
-    "url": "https://griasdi.doodleshnookie.net/updates/dev/566/griasdi-0.1.0-aarch64-linux.tar.gz",
-    "sha256": "9d080f1b3c1aa53ac7b2e7a4e17d597ac38d815b1cc2e5ecdf0a4d1a1cce3958"
+    "url": "https://griasdi.doodleshnookie.net/updates/dev/568/griasdi-0.1.0-aarch64-linux.tar.gz",
+    "sha256": "86b47e2025ee1b1ff3313d94eca9a838f0ff86d04b6df32d166a51a5ef7e4cd3"
   }
 }
