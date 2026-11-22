@@ -28,7 +28,9 @@ let
     pname = "griasdi-unwrapped";
     version = "${sources.version}-${sources.channel}.${toString sources.build}";
 
-    src = fetchurl { inherit (source) url sha256; };
+    # The release mirror of this repo first: the update server keeps only the
+    # newest build.
+    src = fetchurl { inherit (source) urls sha256; };
 
     dontConfigure = true;
     dontBuild = true;

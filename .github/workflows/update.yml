@@ -1,7 +1,8 @@
 name: Update griasdi
 
-# The update server keeps only the newest build and the one before it, and
-# new builds come out several times a day, so check often.
+# New builds come out several times a day. GitHub runs scheduled workflows
+# best-effort (often hours late), which is fine: every pinned build is
+# mirrored to a release, so a pin keeps downloading after upstream drops it.
 on:
   schedule:
     - cron: "17 * * * *"
@@ -34,22 +35,38 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # The runner only builds x86_64, so check the other tarballs' hashes
-      # by downloading them.
-      - name: Check every tarball
+      # The update server keeps only the newest build, so a pin would 404 as
+      # soon as the next build is out. Download every tarball from it, check
+      # its sha256 (the runner only builds x86_64) and mirror it to the release
+      # <channel>-<build>, the first of each pin's urls. The license allows
+      # passing on unmodified copies free of charge.
+      - name: Check and mirror every tarball
         if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          jq -r 'to_entries[] | select(.value | type == "object") | "\(.value.sha256)  \(.value.url)"' sources.json |
+          dir=$RUNNER_TEMP/tarballs
+          mkdir -p "$dir"
+          jq -r 'to_entries[] | select(.value | type == "object") | "\(.value.sha256)  \(.value.urls[-1])"' sources.json |
             while read -r sha url; do
-              got=$(curl -sfL --max-time 600 "$url" | sha256sum | cut -d' ' -f1)
+              file=$dir/${url##*/}
+              curl -sfL --max-time 600 -o "$file" "$url"
+              got=$(sha256sum "$file" | cut -d' ' -f1)
               if [ "$got" != "$sha" ]; then
                 echo "::error::sha256 mismatch for $url: got $got"
                 exit 1
               fi
               echo "ok $url"
             done
+          tag=$(jq -r '"\(.channel)-\(.build)"' sources.json)
+          summary=$(jq -r '"griasdi \(.version) build \(.build) (\(.channel))"' sources.json)
+          gh release view "$tag" > /dev/null 2>&1 ||
+            gh release create "$tag" --title "$summary" --latest=false \
+              --notes "Unmodified upstream tarballs, mirrored because the update server keeps only the newest build."
+          gh release upload "$tag" "$dir"/* --clobber
 
-      # Downloads the tarball (checks the sha256) and builds the FHS env.
+      # Downloads the tarball through the mirror (checks the sha256) and builds
+      # the FHS env.
       - name: Build
         if: steps.diff.outputs.changed == 'true'
         run: nix build .#griasdi --print-build-logs
@@ -63,3 +80,18 @@ jobs:
           git commit -m "griasdi: $summary" -- sources.json
           git pull --rebase
           git push
+
+      # griasdi doesn't work with older builds, so keep only the mirror of the
+      # pin just pushed. After the push, so main never points at a deleted one.
+      - name: Delete older mirrors
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(jq -r '"\(.channel)-\(.build)"' sources.json)
+          gh release list --limit 1000 --json tagName -q '.[].tagName' |
+            grep -E '^(dev|release)-[0-9]+$' | grep -vxF "$tag" |
+            while read -r old; do
+              gh release delete "$old" --yes --cleanup-tag
+              echo "deleted $old"
+            done

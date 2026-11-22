@@ -43,14 +43,18 @@ If you use `overlays.default` instead, your own nixpkgs has to allow it.
 ./update.sh dev    # a specific channel
 ```
 
-The script reads the update server's manifest and writes the build number, URL
-and sha256 into `sources.json`.
+The script reads the update server's manifest and writes the build number,
+URLs and sha256 into `sources.json`.
 
-`.github/workflows/update.yml` does this every hour: it runs `update.sh`, builds
-the new pin, and commits `sources.json` if anything changed.
+`.github/workflows/update.yml` does this every hour (GitHub often runs it
+later): it runs `update.sh`, checks the tarballs, mirrors them to the release
+`<channel>-<build>` of this repo, builds the new pin, commits
+`sources.json` if anything changed, and then deletes the older mirror releases
+(griasdi doesn't work with older builds, so only the current pin is kept).
 
-**Note:** as of writing, the update server only keeps the newest build and
-the one before it, and new builds come out often, so a pinned build stops
-downloading soon after it's replaced. Machines that already have it in the
-store keep working, but a fresh install fails with a 404 until `sources.json`
-is updated.
+**Why the mirror:** the update server keeps only the newest build, and new
+builds come out several times a day, so an upstream URL stops working as soon
+as the build is replaced. Each pin lists the release mirror first and the
+update server second. The griasdi license allows passing on unmodified copies
+free of charge. If you run `update.sh` yourself without the workflow, the
+mirror doesn't exist yet and the download falls back to the update server.

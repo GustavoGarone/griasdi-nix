@@ -2,11 +2,14 @@
 #!nix-shell -i bash -p curl jq
 # shellcheck shell=bash
 # Pin sources.json to the newest griasdi build on the update server.
-# The server keeps only the newest build and the one before it, so a pin
-# stops downloading soon after a new build is published; rerun this then.
+# The server keeps only the newest build, so a pin stops downloading as soon
+# as a new build is published. The update workflow therefore mirrors each
+# pinned tarball to a release of this repo (tag <channel>-<build>), and
+# fetchurl tries that mirror first and the update server second.
 set -euo pipefail
 
 updates=https://griasdi.doodleshnookie.net/updates
+repo=${GITHUB_REPOSITORY:-GustavoGarone/griasdi-nix}
 cd "$(dirname "$0")"
 trap 'rm -f sources.json.tmp' EXIT
 
@@ -23,10 +26,12 @@ done
 [[ -n $build ]] || { echo "no build found" >&2; exit 1; }
 
 base=$updates/$channel/$build
-fetch "$base/manifest.json" | jq --arg base "$base" --arg channel "$channel" --argjson build "$build" '
+mirror=https://github.com/$repo/releases/download/$channel-$build
+fetch "$base/manifest.json" | jq --arg base "$base" --arg mirror "$mirror" \
+  --arg channel "$channel" --argjson build "$build" '
   def desktop($target): [.artifacts[]
     | select(.component == "desktop" and .kind == "tar.gz" and .target == $target)
-    | { url: "\($base)/\(.file)", sha256 }];
+    | { urls: ["\($mirror)/\(.file)", "\($base)/\(.file)"], sha256 }];
   {
     channel: $channel, build: $build, version,
     "x86_64-linux": desktop("x86_64-unknown-linux-gnu")[0],
