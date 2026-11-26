@@ -1,19 +1,19 @@
 {
   "channel": "dev",
-  "build": 712,
+  "build": 715,
   "version": "0.1.0",
   "x86_64-linux": {
     "urls": [
-      "https://github.com/GustavoGarone/griasdi-nix/releases/download/dev-712/griasdi-0.1.0-x86_64-linux.tar.gz",
-      "https://griasdi.doodleshnookie.net/updates/dev/712/griasdi-0.1.0-x86_64-linux.tar.gz"
+      "https://github.com/GustavoGarone/griasdi-nix/releases/download/dev-715/griasdi-0.1.0-x86_64-linux.tar.gz",
+      "https://griasdi.doodleshnookie.net/updates/dev/715/griasdi-0.1.0-x86_64-linux.tar.gz"
     ],
-    "sha256": "5e1581989c8eaed2302a806621f1c65e34fd6bf096bcbb9c0f3f3de4623a55ef"
+    "sha256": "51cf8345d23dd8dfbab692ba433b48b41f89032184b58aeadd9ff4910272ec52"
   },
   "aarch64-linux": {
     "urls": [
-      "https://github.com/GustavoGarone/griasdi-nix/releases/download/dev-712/griasdi-0.1.0-aarch64-linux.tar.gz",
-      "https://griasdi.doodleshnookie.net/updates/dev/712/griasdi-0.1.0-aarch64-linux.tar.gz"
+      "https://github.com/GustavoGarone/griasdi-nix/releases/download/dev-715/griasdi-0.1.0-aarch64-linux.tar.gz",
+      "https://griasdi.doodleshnookie.net/updates/dev/715/griasdi-0.1.0-aarch64-linux.tar.gz"
     ],
-    "sha256": "8302128673ae9894c3c79e98e5a77deb0df74bb084cab14df8724b0ac9b4214a"
+    "sha256": "7669e4383af1073fc20a9356e80b974b4a31ee174142c3944dcc831da77fd488"
   }
 }
